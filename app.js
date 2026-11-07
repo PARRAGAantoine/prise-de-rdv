@@ -294,15 +294,15 @@ async function handleFormSubmit(e) {
   );
   const gcalDirectLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalTitle}&dates=${startIso}/${endIso}&details=${gcalDetails}`;
 
-  // 3. Appel de l'API Google Apps Script (si configurée) pour ajout automatique sans intervention
+  // 3. Appel de l'API Google Apps Script pour ajout automatique dans Google Calendar & envoi d'email
   if (CONFIG.googleScriptUrl && !CONFIG.googleScriptUrl.includes('placeholder')) {
     try {
       fetch(CONFIG.googleScriptUrl, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(appt)
-      }).catch(() => {});
+      }).catch(err => console.log('GAS status:', err));
     } catch (err) {}
   }
 
