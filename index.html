@@ -3,269 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prise de RDV - Antoine Parraga</title>
-  <meta name="description" content="Prenez rendez-vous en ligne avec Antoine Parraga. Calendrier en temps réel synchronisé avec Google Agenda.">
+  <title>Prise de RDV</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Header / Navigation -->
-  <header class="app-header">
-    <div class="header-container">
-      <div class="brand">
-        <div class="avatar-icon">AP</div>
-        <div>
-          <h1 class="brand-title">Antoine Parraga</h1>
-          <p class="brand-sub">parraga.antoine@gmail.com</p>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button id="adminToggleBtn" class="btn-ghost">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          Planning & Infos
-        </button>
-      </div>
-    </div>
-  </header>
+  <div class="page-container">
+    <!-- Header simple & épuré -->
+    <header class="page-header">
+      <h1 class="main-title">Prise de RDV</h1>
+      <p class="subtitle">Réservez votre créneau en direct</p>
+      <p class="instruction">Choisissez un jour et une heure disponibles</p>
+    </header>
 
-  <!-- Hero Section -->
-  <main class="main-content">
-    <section class="hero-card">
-      <div class="hero-badge">📅 Prise de RDV en ligne</div>
-      <h2 class="hero-title">Réservez votre créneau en direct</h2>
-      <p class="hero-desc">
-        Choisissez un jour et une heure disponibles. À la validation, le rendez-vous est immédiatement synchronisé avec Google Agenda.
-      </p>
-      <div class="rules-chips">
-        <span class="chip chip-info">⏱️ Durée : <strong>1 heure</strong></span>
-        <span class="chip chip-time">🕒 Amplitude : <strong>08h00 &ndash; 20h00</strong></span>
-        <span class="chip chip-warning">⏳ Délai minimum : <strong>4 jours après aujourd'hui</strong></span>
-        <span class="chip chip-neutral">🚫 Fermé les <strong>dimanches</strong></span>
-        <span class="chip chip-success">🚗 Heures de travail + <strong>1h de trajet</strong> bloquées</span>
-      </div>
-    </section>
-
-    <!-- Main Booking Layout: Calendar & Slots -->
-    <div class="booking-grid">
-      <!-- Left: Calendar -->
-      <div class="card calendar-card">
-        <div class="calendar-header">
-          <h3 id="currentMonthYear">Chargement...</h3>
-          <div class="cal-nav">
-            <button id="prevMonthBtn" class="btn-icon" title="Mois précédent">&larr;</button>
-            <button id="todayBtn" class="btn-sm">Aujourd'hui</button>
-            <button id="nextMonthBtn" class="btn-icon" title="Mois suivant">&rarr;</button>
+    <!-- Layout principal : Calendrier & Créneaux disponibles -->
+    <div class="booking-layout">
+      <!-- Calendrier -->
+      <div class="calendar-box">
+        <div class="calendar-top">
+          <h2 id="currentMonthYear">Novembre 2026</h2>
+          <div class="nav-buttons">
+            <button id="prevMonthBtn" class="btn-nav" title="Mois précédent">&larr;</button>
+            <button id="todayBtn" class="btn-today">Aujourd'hui</button>
+            <button id="nextMonthBtn" class="btn-nav" title="Mois suivant">&rarr;</button>
           </div>
         </div>
 
-        <div class="weekdays-grid">
+        <div class="weekdays-row">
           <div>Lun</div>
           <div>Mar</div>
           <div>Mer</div>
           <div>Jeu</div>
           <div>Ven</div>
           <div>Sam</div>
-          <div class="sunday-head">Dim</div>
+          <div>Dim</div>
         </div>
 
         <div id="calendarDays" class="days-grid">
-          <!-- Populated by JS -->
-        </div>
-
-        <div class="calendar-legend">
-          <div class="legend-item"><span class="dot dot-avail"></span> Disponible</div>
-          <div class="legend-item"><span class="dot dot-disabled"></span> &lt; 4 jours / Dimanche</div>
-          <div class="legend-item"><span class="dot dot-full"></span> Heures occupées</div>
+          <!-- Rempli en JS -->
         </div>
       </div>
 
-      <!-- Right: Slots for selected date -->
-      <div class="card slots-card">
-        <div class="slots-header">
-          <div>
-            <span class="sub-label">Créneaux horaires</span>
-            <h3 id="selectedDateTitle">Choisissez une date</h3>
-          </div>
-          <div id="shiftsNotice" class="shifts-notice" style="display: none;"></div>
+      <!-- Section : Créneaux disponibles UNIQUEMENT -->
+      <div class="slots-box">
+        <h2 class="slots-heading" id="slotsSectionTitle">Créneaux disponibles :</h2>
+        <div id="selectedDateLabel" class="selected-date-text">Sélectionnez une date dans le calendrier</div>
+        
+        <div id="slotsContainer" class="slots-grid">
+          <p class="placeholder-text">Cliquez sur une date disponible pour afficher les créneaux.</p>
         </div>
-
-        <div id="slotsContainer" class="slots-list">
-          <div class="empty-state">
-            <div class="empty-icon">👈</div>
-            <p>Veuillez cliquer sur une date disponible dans le calendrier pour afficher les créneaux d'1 heure.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- Booking Modal -->
-  <div id="bookingModal" class="modal-backdrop" style="display: none;">
-    <div class="modal-window">
-      <div class="modal-header">
-        <div>
-          <span class="sub-label">Confirmation de votre choix</span>
-          <h3>Finaliser votre rendez-vous</h3>
-        </div>
-        <button id="closeModalBtn" class="btn-close">&times;</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="slot-summary-card">
-          <div class="summary-line">
-            <span class="sum-icon">📅</span>
-            <div>
-              <strong id="modalDateFormatted">-</strong>
-              <div id="modalTimeFormatted" class="sum-time">-</div>
-            </div>
-          </div>
-          <div class="summary-badge">Durée : 1h</div>
-        </div>
-
-        <form id="bookingForm" class="booking-form">
-          <div class="form-group">
-            <label for="clientName">Votre Nom et Prénom *</label>
-            <input type="text" id="clientName" required placeholder="Ex: Jean Dupont">
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="clientEmail">Votre Email *</label>
-              <input type="email" id="clientEmail" required placeholder="nom@exemple.com">
-            </div>
-            <div class="form-group">
-              <label for="clientPhone">Votre Téléphone *</label>
-              <input type="tel" id="clientPhone" required placeholder="06 12 34 56 78">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="clientNotes">Objet ou motif du rendez-vous (optionnel)</label>
-            <textarea id="clientNotes" rows="3" placeholder="Précisez votre demande ou vos questions..."></textarea>
-          </div>
-
-          <div class="modal-actions">
-            <button type="button" id="cancelModalBtn" class="btn-ghost">Annuler</button>
-            <button type="submit" id="submitBookingBtn" class="btn-primary">
-              Valider la réservation
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   </div>
 
-  <!-- Success Modal -->
-  <div id="successModal" class="modal-backdrop" style="display: none;">
-    <div class="modal-window text-center">
-      <div class="success-icon">✓</div>
-      <h3 class="success-title">Rendez-vous confirmé !</h3>
-      <p class="success-desc">
-        Votre créneau a été enregistré. Cliquez ci-dessous pour l'ajouter directement à votre agenda Google et inviter Antoine Parraga.
-      </p>
-
-      <div class="success-recap" id="successRecap">
-        <!-- Filled by JS -->
+  <!-- Modal Réservation -->
+  <div id="bookingModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-top">
+        <h3>Confirmer le rendez-vous</h3>
+        <button id="closeModalBtn" class="btn-x">&times;</button>
       </div>
 
-      <div class="sync-actions">
-        <a id="gcalLink" href="#" target="_blank" class="btn-gcal">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+      <div class="slot-summary">
+        <span id="modalDateFormatted">-</span>
+        <strong id="modalTimeFormatted">-</strong>
+      </div>
+
+      <form id="bookingForm" class="booking-form">
+        <div class="field">
+          <label for="clientName">Nom et Prénom *</label>
+          <input type="text" id="clientName" required placeholder="Votre nom complet">
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="clientEmail">Email *</label>
+            <input type="email" id="clientEmail" required placeholder="nom@exemple.com">
+          </div>
+          <div class="field">
+            <label for="clientPhone">Téléphone *</label>
+            <input type="tel" id="clientPhone" required placeholder="06 12 34 56 78">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="clientNotes">Motif (facultatif)</label>
+          <textarea id="clientNotes" rows="2" placeholder="Précisez votre demande..."></textarea>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" id="cancelModalBtn" class="btn-cancel">Annuler</button>
+          <button type="submit" id="submitBookingBtn" class="btn-confirm">Valider le rendez-vous</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Succès -->
+  <div id="successModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card modal-center">
+      <div class="check-circle">✓</div>
+      <h3>Rendez-vous confirmé !</h3>
+      <div id="successDetails" class="success-box"></div>
+      <p class="success-note">Un email de notification a été envoyé à Antoine Parraga et le créneau est réservé.</p>
+      
+      <div class="success-actions">
+        <a id="gcalBtn" href="#" target="_blank" class="btn-gcal">
           Ajouter à mon Google Agenda
         </a>
         <button id="icsBtn" class="btn-ics">
-          📅 Télécharger le fichier (.ics)
+          Télécharger le fichier .ics
         </button>
-        <a id="emailAntoineLink" href="#" class="btn-email">
-          ✉️ Notifier Antoine par Email
-        </a>
       </div>
 
-      <button id="closeSuccessBtn" class="btn-primary mt-4">Fermer</button>
+      <button id="closeSuccessBtn" class="btn-done">Fermer</button>
     </div>
   </div>
-
-  <!-- Admin / Schedule Info Modal -->
-  <div id="adminModal" class="modal-backdrop" style="display: none;">
-    <div class="modal-window modal-lg">
-      <div class="modal-header">
-        <div>
-          <span class="sub-label">Gestion & Planning</span>
-          <h3>Espace Antoine Parraga</h3>
-        </div>
-        <button id="closeAdminBtn" class="btn-close">&times;</button>
-      </div>
-
-      <div class="admin-tabs">
-        <button class="admin-tab active" data-tab="appts">Rendez-vous enregistrés</button>
-        <button class="admin-tab" data-tab="shifts">Mes horaires de travail (Intermarché)</button>
-        <button class="admin-tab" data-tab="add-shift">+ Ajouter un horaire</button>
-      </div>
-
-      <div class="modal-body admin-body">
-        <!-- Tab 1: Appointments -->
-        <div id="tab-appts" class="tab-pane active">
-          <div id="adminApptsList">Chargement...</div>
-        </div>
-
-        <!-- Tab 2: Shifts -->
-        <div id="tab-shifts" class="tab-pane">
-          <div class="table-container">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Horaires</th>
-                  <th>Détails</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="adminShiftsTable">
-                <!-- Filled by JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Tab 3: Add shift -->
-        <div id="tab-add-shift" class="tab-pane">
-          <form id="addShiftForm" class="shift-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Date du poste</label>
-                <input type="date" id="newShiftDate" required>
-              </div>
-              <div class="form-group">
-                <label>Heure de début</label>
-                <input type="time" id="newShiftStart" required value="05:30">
-              </div>
-              <div class="form-group">
-                <label>Heure de fin</label>
-                <input type="time" id="newShiftEnd" required value="12:30">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Lieu / Libellé</label>
-                <input type="text" id="newShiftLabel" value="Intermarché Carmaux">
-              </div>
-              <div class="form-group">
-                <label>Note éventuelle</label>
-                <input type="text" id="newShiftNote" placeholder="Ex: Nettoyage, Matin...">
-              </div>
-            </div>
-            <button type="submit" class="btn-primary">Ajouter ce créneau de travail</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="app-footer">
-    <p>Site de prise de rendez-vous en ligne &bull; Synchronisé avec <strong>parraga.antoine@gmail.com</strong></p>
-  </footer>
 
   <script src="app.js"></script>
 </body>
