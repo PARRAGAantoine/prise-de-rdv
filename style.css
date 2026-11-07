@@ -314,6 +314,12 @@ body {
   color: #cbd5e1;
 }
 
+.optional {
+  font-weight: normal;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
 .field input, .field textarea {
   width: 100%;
   padding: 0.75rem 0.9rem;

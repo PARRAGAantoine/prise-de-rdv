@@ -6,7 +6,9 @@ const CONFIG = {
   travelBufferMinutes: 60,
   minDaysBuffer: 5, // Aujourd'hui + 5 jours (4 jours pleins entre aujourd'hui et le premier créneau)
   startHour: 8,
-  endHour: 20
+  endHour: 20,
+  // URL de l'API Google Apps Script (pour ajout 100% automatique dans Google Calendar sans action du client)
+  googleScriptUrl: 'https://script.google.com/macros/s/AKfycbz_placeholder/exec'
 };
 
 // Horaires de travail (Semaines 44 à 49)
@@ -61,7 +63,6 @@ let currentYear = 2026;
 let currentMonth = 11;
 let selectedDate = null;
 let selectedSlot = null;
-let lastBooking = null;
 
 const MONTH_NAMES = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -122,7 +123,6 @@ function setupEvents() {
   });
 
   document.getElementById('bookingForm').addEventListener('submit', handleFormSubmit);
-  document.getElementById('icsBtn').addEventListener('click', downloadIcs);
 }
 
 function getAvailableSlotsForDate(dateStr) {
@@ -130,7 +130,7 @@ function getAvailableSlotsForDate(dateStr) {
   if (d.getDay() === 0) return []; // Pas le dimanche
   if (dateStr < getMinAllowedDate()) return []; // Pas avant 4 jours
 
-  // Périodes occupées par le travail avec 1h de battement avant et après
+  // Périodes occupées par le travail avec 1h de trajet avant et après
   const dayShifts = SHIFTS.filter(s => s.date === dateStr);
   const busy = [];
   for (const s of dayShifts) {
@@ -139,7 +139,7 @@ function getAvailableSlotsForDate(dateStr) {
     busy.push({ start: startM, end: endM });
   }
 
-  // Rendez-vous enregistrés localement
+  // Rendez-vous réservés
   const localAppts = JSON.parse(localStorage.getItem('saved_appts') || '[]')
     .filter(a => a.date === dateStr);
   for (const a of localAppts) {
@@ -262,9 +262,9 @@ async function handleFormSubmit(e) {
   if (!selectedSlot) return;
 
   const clientName = document.getElementById('clientName').value.trim();
-  const clientEmail = document.getElementById('clientEmail').value.trim();
-  const clientPhone = document.getElementById('clientPhone').value.trim();
-  const clientNotes = document.getElementById('clientNotes').value.trim();
+  const clientEmail = document.getElementById('clientEmail').value.trim() || 'Non renseigné';
+  const clientPhone = document.getElementById('clientPhone').value.trim() || 'Non renseigné';
+  const clientNotes = document.getElementById('clientNotes').value.trim() || 'Aucun motif';
 
   const submitBtn = document.getElementById('submitBookingBtn');
   submitBtn.disabled = true;
@@ -280,14 +280,33 @@ async function handleFormSubmit(e) {
     clientNotes
   };
 
-  // 1. Sauvegarde locale pour bloquer le créneau
+  // 1. Sauvegarde locale pour bloquer immédiatement le créneau sur le site
   const appts = JSON.parse(localStorage.getItem('saved_appts') || '[]');
   appts.push(appt);
   localStorage.setItem('saved_appts', JSON.stringify(appts));
 
-  lastBooking = appt;
+  // 2. Lien direct pour ajout dans Google Calendar d'Antoine (inclus dans l'email envoyé à Antoine)
+  const startIso = appt.date.replace(/-/g, '') + 'T' + appt.startTime.replace(':', '') + '00';
+  const endIso = appt.date.replace(/-/g, '') + 'T' + appt.endTime.replace(':', '') + '00';
+  const gcalTitle = encodeURIComponent(`Prise de RDV - ${clientName}`);
+  const gcalDetails = encodeURIComponent(
+    `Rendez-vous avec ${clientName}\nTéléphone : ${clientPhone}\nEmail : ${clientEmail}\nMotif : ${clientNotes}`
+  );
+  const gcalDirectLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${gcalTitle}&dates=${startIso}/${endIso}&details=${gcalDetails}`;
 
-  // 2. Envoi du mail automatique à Antoine Parraga via FormSubmit
+  // 3. Appel de l'API Google Apps Script (si configurée) pour ajout automatique sans intervention
+  if (CONFIG.googleScriptUrl && !CONFIG.googleScriptUrl.includes('placeholder')) {
+    try {
+      fetch(CONFIG.googleScriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appt)
+      }).catch(() => {});
+    } catch (err) {}
+  }
+
+  // 4. Envoi du mail automatique à Antoine Parraga via FormSubmit
   try {
     fetch('https://formsubmit.co/ajax/parraga.antoine@gmail.com', {
       method: 'POST',
@@ -298,76 +317,29 @@ async function handleFormSubmit(e) {
       body: JSON.stringify({
         _subject: `Nouveau Rendez-vous : ${clientName} (${appt.date} à ${appt.startTime})`,
         Nom: clientName,
-        Email: clientEmail,
         Telephone: clientPhone,
+        Email: clientEmail,
         Date: appt.date,
         Horaire: `${appt.startTime} - ${appt.endTime}`,
-        Motif: clientNotes || 'Aucun motif renseigné'
+        Motif: clientNotes,
+        _autoresponse: `Bonjour, votre rendez-vous avec Antoine Parraga pour le ${appt.date} à ${appt.startTime} a bien été pris en compte.`,
+        Lien_Ajout_Google_Calendar: gcalDirectLink
       })
     }).catch(() => {});
   } catch (err) {}
 
-  // 3. Préparer le lien Google Calendar
-  const startIso = appt.date.replace(/-/g, '') + 'T' + appt.startTime.replace(':', '') + '00';
-  const endIso = appt.date.replace(/-/g, '') + 'T' + appt.endTime.replace(':', '') + '00';
-  const title = encodeURIComponent(`Prise de RDV - ${clientName}`);
-  const details = encodeURIComponent(
-    `Rendez-vous avec ${clientName}\nTéléphone : ${clientPhone}\nEmail : ${clientEmail}\nMotif : ${clientNotes || 'Néant'}`
-  );
-  const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startIso}/${endIso}&details=${details}&add=${encodeURIComponent(clientEmail)}&add=${encodeURIComponent(CONFIG.hostEmail)}`;
-
-  // Ouvrir automatiquement Google Calendar dans un nouvel onglet pour l'ajout immédiat
-  window.open(gcalUrl, '_blank');
-
+  // 5. Fermeture et affichage de la confirmation sans aucune redirection
   closeModal();
   document.getElementById('bookingForm').reset();
   submitBtn.disabled = false;
   submitBtn.textContent = 'Valider le rendez-vous';
 
-  // Affichage du succès
   const detailsBox = document.getElementById('successDetails');
   detailsBox.innerHTML = `
     <strong>${appt.date.split('-').reverse().join('/')}</strong> de <strong>${appt.startTime} à ${appt.endTime}</strong><br>
-    Participant : ${clientName} (${clientPhone})
+    Au nom de : <strong>${clientName}</strong>
   `;
 
-  document.getElementById('gcalBtn').href = gcalUrl;
   document.getElementById('successModal').style.display = 'flex';
-
   renderCalendar(currentYear, currentMonth);
-}
-
-function downloadIcs() {
-  if (!lastBooking) return;
-  const b = lastBooking;
-  const startIso = b.date.replace(/-/g, '') + 'T' + b.startTime.replace(':', '') + '00';
-  const endIso = b.date.replace(/-/g, '') + 'T' + b.endTime.replace(':', '') + '00';
-  const nowIso = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-  const ics = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Antoine Parraga//Prise de RDV//FR',
-    'BEGIN:VEVENT',
-    `UID:rdv-${Date.now()}@parraga.antoine`,
-    `DTSTAMP:${nowIso}`,
-    `DTSTART;TZID=Europe/Paris:${startIso}`,
-    `DTEND;TZID=Europe/Paris:${endIso}`,
-    `SUMMARY:Prise de RDV - ${b.clientName}`,
-    `DESCRIPTION:Rendez-vous avec ${b.clientName}\\nTel: ${b.clientPhone}\\nEmail: ${b.clientEmail}`,
-    `ORGANIZER;CN=Antoine Parraga:mailto:${CONFIG.hostEmail}`,
-    'STATUS:CONFIRMED',
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\r\n');
-
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `rdv_${b.date}_${b.startTime.replace(':', 'h')}.ics`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
