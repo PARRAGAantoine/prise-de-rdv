@@ -7,8 +7,8 @@ const CONFIG = {
   minDaysBuffer: 5, // Aujourd'hui + 5 jours (4 jours pleins entre aujourd'hui et le premier créneau)
   startHour: 8,
   endHour: 20,
-  // URL de l'API Google Apps Script (pour ajout 100% automatique dans Google Calendar sans action du client)
-  googleScriptUrl: 'https://script.google.com/macros/s/AKfycbz_placeholder/exec'
+  // URL de l'API Google Apps Script officielle d'Antoine pour ajout automatique dans Google Calendar & envoi d'email
+  googleScriptUrl: 'https://script.google.com/macros/s/AKfycbyhVPILr_P4uZCcVjeytgnk4lAs1MQX7sJTjI4o_R0wQgoBc0XrZCGN2oIO83Bs_hsd/exec'
 };
 
 // Horaires de travail (Semaines 44 à 49)
