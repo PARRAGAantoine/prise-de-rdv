@@ -167,6 +167,14 @@ function getAvailableSlotsForDate(dateStr) {
 
 function renderCalendar(year, month) {
   document.getElementById('currentMonthYear').textContent = `${MONTH_NAMES[month - 1]} ${year}`;
+
+  const prevMonthIndex = month === 1 ? 11 : month - 2;
+  const nextMonthIndex = month === 12 ? 0 : month;
+  const prevBtn = document.getElementById('prevMonthBtn');
+  const nextBtn = document.getElementById('nextMonthBtn');
+  if (prevBtn) prevBtn.textContent = `‹ ${MONTH_NAMES[prevMonthIndex]}`;
+  if (nextBtn) nextBtn.textContent = `${MONTH_NAMES[nextMonthIndex]} ›`;
+
   const container = document.getElementById('calendarDays');
   container.innerHTML = '';
 
