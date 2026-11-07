@@ -63,6 +63,7 @@ let currentYear = 2026;
 let currentMonth = 11;
 let selectedDate = null;
 let selectedSlot = null;
+let calendarEvents = [];
 
 const MONTH_NAMES = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -87,13 +88,36 @@ function getMinAllowedDate() {
   return minDate.toISOString().split('T')[0];
 }
 
+async function fetchCalendarEvents() {
+  if (!CONFIG.googleScriptUrl || CONFIG.googleScriptUrl.includes('placeholder')) return;
+  try {
+    const res = await fetch(CONFIG.googleScriptUrl);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.status === 'success' && Array.isArray(data.events)) {
+      calendarEvents = data.events;
+      renderCalendar(currentYear, currentMonth);
+    }
+  } catch (err) {
+    console.warn('Sync Google Calendar:', err);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Purge de l'ancien localStorage qui bloquait les créneaux localement
+  try {
+    localStorage.removeItem('saved_appts');
+  } catch (e) {}
+
   const today = new Date();
   currentYear = today.getFullYear();
   currentMonth = today.getMonth() + 1;
 
   setupEvents();
   renderCalendar(currentYear, currentMonth);
+
+  // Synchronisation en temps réel avec Google Calendar
+  fetchCalendarEvents();
 });
 
 function setupEvents() {
@@ -139,11 +163,17 @@ function getAvailableSlotsForDate(dateStr) {
     busy.push({ start: startM, end: endM });
   }
 
-  // Rendez-vous réservés
-  const localAppts = JSON.parse(localStorage.getItem('saved_appts') || '[]')
-    .filter(a => a.date === dateStr);
-  for (const a of localAppts) {
-    busy.push({ start: timeToMin(a.startTime), end: timeToMin(a.endTime) });
+  // Événements synchronisés en temps réel depuis Google Calendar
+  for (const ev of calendarEvents) {
+    if (ev.allDay && ev.date === dateStr) {
+      return []; // Journée entière occupée
+    }
+    if (ev.date === dateStr && ev.startTime && ev.endTime) {
+      busy.push({
+        start: timeToMin(ev.startTime),
+        end: timeToMin(ev.endTime)
+      });
+    }
   }
 
   const freeSlots = [];
@@ -288,10 +318,13 @@ async function handleFormSubmit(e) {
     clientNotes
   };
 
-  // 1. Sauvegarde locale pour bloquer immédiatement le créneau sur le site
-  const appts = JSON.parse(localStorage.getItem('saved_appts') || '[]');
-  appts.push(appt);
-  localStorage.setItem('saved_appts', JSON.stringify(appts));
+  // 1. Bloquer immédiatement en mémoire pour feedback instantané sur l'écran
+  calendarEvents.push({
+    allDay: false,
+    date: appt.date,
+    startTime: appt.startTime,
+    endTime: appt.endTime
+  });
 
   // 2. Lien direct pour ajout dans Google Calendar d'Antoine (inclus dans l'email envoyé à Antoine)
   const startIso = appt.date.replace(/-/g, '') + 'T' + appt.startTime.replace(':', '') + '00';
@@ -350,4 +383,5 @@ async function handleFormSubmit(e) {
 
   document.getElementById('successModal').style.display = 'flex';
   renderCalendar(currentYear, currentMonth);
+  setTimeout(fetchCalendarEvents, 3000);
 }
