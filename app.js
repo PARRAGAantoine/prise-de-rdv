@@ -228,7 +228,7 @@ function renderCalendar(year, month) {
 
     if (slots.length > 0) {
       dayEl.classList.add('available');
-      dayEl.addEventListener('click', () => selectDate(dateStr, slots));
+      dayEl.addEventListener('click', () => selectDate(dateStr, slots, true));
     } else {
       dayEl.classList.add('disabled');
     }
@@ -246,7 +246,7 @@ function renderCalendar(year, month) {
   }
 }
 
-function selectDate(dateStr, slots) {
+function selectDate(dateStr, slots, isUserClick = false) {
   selectedDate = dateStr;
 
   document.querySelectorAll('.day-cell').forEach(el => {
@@ -276,6 +276,16 @@ function selectDate(dateStr, slots) {
     btn.addEventListener('click', () => openBookingModal(dateStr, slot));
     container.appendChild(btn);
   });
+
+  // Défilement automatique fluide vers les heures sur mobile et tablette
+  if (isUserClick && window.innerWidth <= 880) {
+    setTimeout(() => {
+      const slotsBox = document.querySelector('.slots-box');
+      if (slotsBox) {
+        slotsBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 80);
+  }
 }
 
 function openBookingModal(dateStr, slot) {
