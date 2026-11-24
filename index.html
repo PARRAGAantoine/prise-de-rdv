@@ -695,14 +695,21 @@ const CONFIG = {
   title: 'Prise de RDV',
   slotDurationMinutes: 60,
   travelBufferMinutes: 60,
-  minDaysBuffer: 5, // Aujourd'hui + 5 jours (4 jours pleins entre aujourd'hui et le premier créneau)
+  minDaysBuffer: 0, // Prise de RDV sans carence
+  maxBookingDate: '2027-01-02', // Dernière date du planning fourni (Semaine 53)
   startHour: 8,
   endHour: 20,
   // URL de l'API Google Apps Script officielle d'Antoine pour ajout automatique dans Google Calendar & envoi d'email
   googleScriptUrl: 'https://script.google.com/macros/s/AKfycbyhVPILr_P4uZCcVjeytgnk4lAs1MQX7sJTjI4o_R0wQgoBc0XrZCGN2oIO83Bs_hsd/exec'
 };
 
-// Horaires de travail (Semaines 44 à 49)
+// Jours fériés / indisponibles (aucun RDV possible)
+const BLOCKED_DATES = [
+  '2026-12-25', // Noël (férié)
+  '2027-01-01'  // Jour de l'An (férié)
+];
+
+// Horaires de travail (Semaines 44 à 53)
 const SHIFTS = [
   // Semaine 44
   { date: '2026-10-26', start: '14:00', end: '19:45' },
@@ -747,7 +754,36 @@ const SHIFTS = [
   { date: '2026-12-02', start: '05:30', end: '10:30' },
   { date: '2026-12-03', start: '14:00', end: '19:45' },
   { date: '2026-12-04', start: '05:30', end: '11:00' },
-  { date: '2026-12-05', start: '05:30', end: '12:30' }
+  { date: '2026-12-05', start: '05:30', end: '12:30' },
+  // Semaine 50
+  { date: '2026-12-07', start: '05:00', end: '10:30' },
+  { date: '2026-12-08', start: '05:30', end: '10:30' },
+  { date: '2026-12-09', start: '05:30', end: '12:30' },
+  { date: '2026-12-10', start: '05:30', end: '12:30' },
+  { date: '2026-12-11', start: '05:30', end: '12:30' },
+  { date: '2026-12-12', start: '05:30', end: '11:00' },
+  // Semaine 51
+  { date: '2026-12-14', start: '05:30', end: '10:30' },
+  { date: '2026-12-15', start: '05:30', end: '10:30' },
+  { date: '2026-12-16', start: '05:30', end: '12:30' },
+  { date: '2026-12-17', start: '13:00', end: '19:45' },
+  { date: '2026-12-18', start: '05:30', end: '12:30' },
+  { date: '2026-12-19', start: '05:30', end: '10:30' },
+  { date: '2026-12-19', start: '14:00', end: '17:00' },
+  // Semaine 52
+  { date: '2026-12-21', start: '14:00', end: '19:45' },
+  { date: '2026-12-22', start: '12:30', end: '19:45' },
+  { date: '2026-12-23', start: '12:30', end: '19:45' },
+  { date: '2026-12-24', start: '12:30', end: '18:15' },
+  { date: '2026-12-26', start: '14:00', end: '19:45' },
+  // Semaine 53
+  { date: '2026-12-28', start: '05:30', end: '10:30' },
+  { date: '2026-12-29', start: '05:30', end: '10:30' },
+  { date: '2026-12-30', start: '05:30', end: '09:00' },
+  { date: '2026-12-30', start: '14:00', end: '17:30' },
+  { date: '2026-12-31', start: '05:30', end: '12:30' },
+  { date: '2027-01-02', start: '05:30', end: '11:00' },
+  { date: '2027-01-02', start: '19:00', end: '20:15' }
 ];
 
 let currentYear = 2026;
@@ -772,11 +808,23 @@ function minToTime(min) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+function formatLocalDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function getMinAllowedDate() {
   const today = new Date();
-  const minDate = new Date(today);
-  minDate.setDate(today.getDate() + CONFIG.minDaysBuffer);
-  return minDate.toISOString().split('T')[0];
+  const minDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + CONFIG.minDaysBuffer);
+  return formatLocalDate(minDate);
+}
+
+function getMaxAllowedDate() {
+  if (CONFIG.maxBookingDate) return CONFIG.maxBookingDate;
+  if (!SHIFTS.length) return null;
+  return SHIFTS.reduce((max, s) => (s.date > max ? s.date : max), SHIFTS[0].date);
 }
 
 async function fetchCalendarEvents() {
@@ -843,7 +891,14 @@ function setupEvents() {
 function getAvailableSlotsForDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   if (d.getDay() === 0) return []; // Pas le dimanche
-  if (dateStr < getMinAllowedDate()) return []; // Pas avant 4 jours
+  if (BLOCKED_DATES.includes(dateStr)) return []; // Jours fériés / indisponibles
+  if (dateStr < getMinAllowedDate()) return []; // Pas dans le passé
+  const maxDate = getMaxAllowedDate();
+  if (maxDate && dateStr > maxDate) return []; // Pas de RDV après la fin du planning
+
+  const now = new Date();
+  const todayStr = formatLocalDate(now);
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
   // Périodes occupées par le travail avec 1h de trajet avant et après
   const dayShifts = SHIFTS.filter(s => s.date === dateStr);
@@ -874,6 +929,7 @@ function getAvailableSlotsForDate(dateStr) {
   for (let cur = startM; cur + CONFIG.slotDurationMinutes <= endM; cur += CONFIG.slotDurationMinutes) {
     const sStart = cur;
     const sEnd = cur + CONFIG.slotDurationMinutes;
+    if (dateStr === todayStr && sStart <= nowMinutes) continue; // Créneau déjà passé aujourd'hui
     const conflict = busy.some(b => sStart < b.end && sEnd > b.start);
     if (!conflict) {
       freeSlots.push({
